@@ -101,6 +101,39 @@ def coerce_location(value, **options):
     """
     # Location objects pass through untouched.
     if not isinstance(value, Location):
+        try:
+            import fs
+        except ImportError:
+            pass
+        else:
+            if isinstance(value, fs.base.FS):
+                class LocationFS(Location):
+                    def ensure_exists(self):
+                        if not self.context._fs.exists('/'):
+                            msg = "The directory %s doesn't exist!"
+                            raise ValueError(msg % self)
+                
+                    def ensure_readable(self):
+                        self.ensure_exists()
+                        info = self.context._fs.getinfo('/', namespaces=['access'])
+                        if not info.permissions.u_r:
+                            raise ValueError(compact("""
+                                The directory {location} isn't readable,
+                                most likely because of permissions.
+                            """, location=self.directory))
+                
+                class ContextFS:
+                    def __init__(self, fs):
+                        self._fs = fs
+                
+                    def list_entries(self, directory):
+                        return self._fs.listdir('/')
+                        
+                return LocationFS(
+                    context = ContextFS(value),
+                    directory=value.geturl('/'),
+                )
+
         # Other values are expected to be strings.
         if not isinstance(value, string_types):
             msg = "Expected Location object or string, got %s instead!"
