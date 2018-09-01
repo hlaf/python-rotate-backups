@@ -101,12 +101,20 @@ def coerce_location(value, **options):
     """
     # Location objects pass through untouched.
     if not isinstance(value, Location):
+        
+        # Other values are expected to be strings.
+        if not isinstance(value, string_types):
+            msg = "Expected Location object or string, got %s instead!"
+            raise ValueError(msg % type(value))
+        
+        # Try to parse a PyFilesystem FS URL
         try:
             import fs
         except ImportError:
             pass
         else:
-            if isinstance(value, fs.base.FS):
+            if '://' in value:
+                location_fs = fs.open_fs(value)
                 class LocationFS(Location):
                     def ensure_exists(self):
                         if not self.context._fs.exists('/'):
@@ -130,14 +138,10 @@ def coerce_location(value, **options):
                         return self._fs.listdir('/')
                         
                 return LocationFS(
-                    context = ContextFS(value),
-                    directory=value.geturl('/'),
+                    context = ContextFS(location_fs),
+                    directory=value,
                 )
 
-        # Other values are expected to be strings.
-        if not isinstance(value, string_types):
-            msg = "Expected Location object or string, got %s instead!"
-            raise ValueError(msg % type(value))
         # Try to parse a remote location.
         ssh_alias, _, directory = value.partition(':')
         if ssh_alias and directory and '/' not in ssh_alias:
