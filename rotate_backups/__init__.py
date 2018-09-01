@@ -130,6 +130,9 @@ def coerce_location(value, **options):
                                 most likely because of permissions.
                             """, location=self.directory))
                 
+                    def join(self, path):
+                        return self.context._fs.geturl(path)
+                
                 class ContextFS:
                     def __init__(self, fs):
                         self._fs = fs
@@ -604,7 +607,7 @@ class RotateBackups(PropertyManager):
                 else:
                     try:
                         backups.append(Backup(
-                            pathname=os.path.join(location.directory, entry),
+                            pathname=location.join(entry),
                             timestamp=datetime.datetime(*(int(group, 10) for group in match.groups('0'))),
                         ))
                     except ValueError as e:
@@ -827,6 +830,9 @@ class Location(PropertyManager):
             self = os.path.normpath(self.directory)
             other = os.path.normpath(location.directory)
             return self == other
+
+    def join(self, path):
+        return os.path.join(self.directory, path)
 
     def __str__(self):
         """Render a simple human readable representation of a location."""
