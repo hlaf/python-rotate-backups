@@ -1,8 +1,8 @@
 # Installation requirements (see also constraints.txt).
 
 coloredlogs >= 5.1
-#executor >= 19.2
--e git://github.com/hlaf/python-executor.git@ionice_class_back_compat#egg=executor
+executor >= 19.2
+#-e git://github.com/hlaf/python-executor.git@ionice_class_back_compat#egg=executor
 humanfriendly >= 3.4
 naturalsort >= 1.4
 property-manager >= 2.3
